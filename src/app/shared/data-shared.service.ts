@@ -1,14 +1,17 @@
 import {Injectable} from "@angular/core";
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpParams} from "@angular/common/http";
 import {Recipe} from "../recipes/recipe.model";
 import {RecipeService} from "../recipes/recipe.service";
-import {map, tap} from "rxjs/operators";
+import {map, take, tap, exhaustMap} from "rxjs/operators";
+import {AuthService} from "../auth/auth.service";
 
 @Injectable({
   providedIn: "root"
 })
 export class DataSharedService {
-  constructor(private http: HttpClient, private recipeService: RecipeService) {
+  constructor(private http: HttpClient,
+              private recipeService: RecipeService,
+              private authService: AuthService  ) {
   }
 
   storeRecipes() {
@@ -23,7 +26,7 @@ export class DataSharedService {
   fetchRecipes() {
     return this.http.get<Recipe[]>('https://ng-recipebook-c1b44.firebaseio.com/recipes.json')
       .pipe(
-        map(recipes => {
+      map(recipes => {
         return recipes.map(recipe => {
           return {
             ...recipe,
@@ -31,17 +34,9 @@ export class DataSharedService {
           };
         });
       }),
-        tap(recipe => {
-          // @ts-ignore
-          this.recipeService.setRecipes(recipe);
-        })
-      )
-      // .subscribe(recipes => {
-      //   console.log(recipes);
-      //   this.recipeService.setRecipes(recipes);
-      // });
+      tap(recipe => {
+        this.recipeService.setRecipes(recipe);
+      })
+    );
   }
-
-
-
 }
